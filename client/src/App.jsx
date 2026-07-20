@@ -1,4 +1,8 @@
 import React, { useEffect } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { StatusBar } from '@capacitor/status-bar';
+import { ScreenOrientation } from '@capacitor/screen-orientation';
+
 import useGameStore from './stores/useGameStore';
 import usePlayerStore from './stores/usePlayerStore';
 
@@ -15,6 +19,13 @@ function App() {
   const { isLoggedIn } = usePlayerStore();
 
   useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      try {
+        ScreenOrientation.lock({ orientation: 'landscape' }).catch(() => {});
+        StatusBar.hide().catch(() => {});
+      } catch (e) {}
+    }
+
     const requestFullscreen = async () => {
       try {
         if (document.documentElement.requestFullscreen) {

@@ -74,7 +74,7 @@ function LocalPlayerController({ tankId, moveInput, aimInput, room }) {
     const isMoving = Math.abs(moveInput.x) > 0.05 || Math.abs(moveInput.y) > 0.05;
 
     if (isMoving) {
-      const speed = tankConfig.stats.speed * 1.5;
+      const speed = tankConfig.stats.speed; // No 1.5x multiplier, feels more realistic
       const turnSpeed = tankConfig.stats.turnSpeed;
       const targetAngle = Math.atan2(-moveInput.x, -moveInput.y);
 
@@ -87,11 +87,16 @@ function LocalPlayerController({ tankId, moveInput, aimInput, room }) {
 
       const magnitude = Math.min(1, Math.sqrt(moveInput.x * moveInput.x + moveInput.y * moveInput.y));
       const direction = new THREE.Vector3(0, 0, -1).applyEuler(euler);
-      const velocity = direction.multiplyScalar(speed * magnitude);
-
-      tankBody.current.setLinvel({ x: velocity.x, y: currentVel.y, z: velocity.z }, true);
+      
+      // Interpolate velocity for smooth acceleration
+      const targetVelocity = direction.multiplyScalar(speed * magnitude);
+      const newVelX = THREE.MathUtils.lerp(currentVel.x, targetVelocity.x, 0.1);
+      const newVelZ = THREE.MathUtils.lerp(currentVel.z, targetVelocity.z, 0.1);
+      
+      tankBody.current.setLinvel({ x: newVelX, y: currentVel.y, z: newVelZ }, true);
     } else {
-      tankBody.current.setLinvel({ x: currentVel.x * 0.85, y: currentVel.y, z: currentVel.z * 0.85 }, true);
+      // Natural braking
+      tankBody.current.setLinvel({ x: currentVel.x * 0.92, y: currentVel.y, z: currentVel.z * 0.92 }, true);
     }
 
     if (Math.abs(aimInput.x) > 0.05 || Math.abs(aimInput.y) > 0.05) {

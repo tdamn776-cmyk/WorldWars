@@ -27,6 +27,9 @@ const useGameStore = create((set, get) => ({
     }
     set({ connectionStatus: 'connecting' });
     try {
+      // Wake up Render free tier via HTTPS
+      await fetch('https://worldwars-server.onrender.com/health').catch(() => {});
+
       const room = await client.joinOrCreate('battle', userData);
       set({ room, connectionStatus: 'connected' });
 

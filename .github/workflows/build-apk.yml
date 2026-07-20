@@ -20,7 +20,7 @@ jobs:
         working-directory: client
         run: |
           npm install
-          npm install @capacitor/core @capacitor/cli @capacitor/android
+          npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/screen-orientation @capacitor/status-bar
 
       - name: Build Vite App
         working-directory: client

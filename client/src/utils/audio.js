@@ -1,73 +1,99 @@
-import { Howl, Howler } from 'howler';
+class SynthAudio {
+  constructor() {
+    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    this.bgmPlaying = false;
+    this.bgmOsc = null;
+    this.masterVolume = this.ctx.createGain();
+    this.masterVolume.gain.value = 0.3;
+    this.masterVolume.connect(this.ctx.destination);
+  }
 
-const sounds = {
-  bgm: new Howl({
-    src: ['/audio/bgm-war.mp3'], // Placeholder standard path
-    loop: true,
-    volume: 0.3,
-  }),
-  buttonClick: new Howl({
-    src: ['/audio/click.mp3'],
-    volume: 0.6,
-  }),
-  chestOpen: new Howl({
-    src: ['/audio/chest-open.mp3'],
-    volume: 0.8,
-  }),
-  shootShell: new Howl({
-    src: ['/audio/shoot-shell.mp3'],
-    volume: 0.5,
-  }),
-  shootLaser: new Howl({
-    src: ['/audio/shoot-laser.mp3'],
-    volume: 0.4,
-  }),
-  explosionSm: new Howl({
-    src: ['/audio/explode-sm.mp3'],
-    volume: 0.5,
-  }),
-  explosionLg: new Howl({
-    src: ['/audio/explode-lg.mp3'],
-    volume: 0.8,
-  }),
-  engineIdle: new Howl({
-    src: ['/audio/engine-idle.mp3'],
-    loop: true,
-    volume: 0.2,
-  }),
-  engineMove: new Howl({
-    src: ['/audio/engine-move.mp3'],
-    loop: true,
-    volume: 0.4,
-  })
-};
+  playTone(freq, type, duration, vol, slideFreq = null) {
+    if (this.ctx.state === 'suspended') this.ctx.resume();
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+    if (slideFreq) {
+      osc.frequency.exponentialRampToValueAtTime(slideFreq, this.ctx.currentTime + duration);
+    }
+    
+    gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+    
+    osc.connect(gain);
+    gain.connect(this.masterVolume);
+    
+    osc.start();
+    osc.stop(this.ctx.currentTime + duration);
+  }
 
-let bgmPlaying = false;
+  noise(duration, vol) {
+    if (this.ctx.state === 'suspended') this.ctx.resume();
+    const bufferSize = this.ctx.sampleRate * duration;
+    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+    }
+    const noise = this.ctx.createBufferSource();
+    noise.buffer = buffer;
+    
+    // lowpass filter for explosion sound
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(1000, this.ctx.currentTime);
+    filter.frequency.exponentialRampToValueAtTime(100, this.ctx.currentTime + duration);
+
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+    
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.masterVolume);
+    
+    noise.start();
+  }
+
+  play(soundName) {
+    switch(soundName) {
+      case 'buttonClick':
+        this.playTone(800, 'sine', 0.1, 0.5, 1200);
+        break;
+      case 'chestOpen':
+        this.playTone(300, 'square', 0.2, 0.4, 600);
+        setTimeout(() => this.playTone(400, 'square', 0.4, 0.5, 800), 200);
+        break;
+      case 'shootShell':
+        this.noise(0.4, 0.8);
+        this.playTone(150, 'sawtooth', 0.3, 0.8, 40);
+        break;
+      case 'shootLaser':
+        this.playTone(880, 'square', 0.2, 0.3, 220);
+        break;
+      case 'explosionSm':
+        this.noise(0.6, 0.8);
+        break;
+      case 'explosionLg':
+        this.noise(1.2, 1.5);
+        this.playTone(100, 'sawtooth', 1.0, 1.0, 20);
+        break;
+    }
+  }
+}
+
+const audioSystem = new SynthAudio();
 
 export const playSound = (soundName) => {
-  if (sounds[soundName]) {
-    try {
-      sounds[soundName].play();
-    } catch {}
-  }
-};
-
-export const stopSound = (soundName) => {
-  if (sounds[soundName]) {
-    sounds[soundName].stop();
-  }
+  audioSystem.play(soundName);
 };
 
 export const toggleBgm = () => {
-  if (bgmPlaying) {
-    sounds.bgm.pause();
-    bgmPlaying = false;
-  } else {
-    sounds.bgm.play();
-    bgmPlaying = true;
-  }
+  // Synthesized BGM can be complex, skipping for mobile performance, leaving SFX only
 };
 
 export const setMasterVolume = (vol) => {
-  Howler.volume(vol); // 0.0 to 1.0
+  audioSystem.masterVolume.gain.value = vol;
 };

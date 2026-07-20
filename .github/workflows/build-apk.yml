@@ -20,6 +20,7 @@ jobs:
         run: |
           cd client
           npm install
+          npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/status-bar
           npm install -g @capacitor/assets
 
       - name: Build React Web App

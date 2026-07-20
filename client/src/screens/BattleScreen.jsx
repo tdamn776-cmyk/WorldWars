@@ -2,6 +2,7 @@ import React, { Suspense, useRef, useState, useCallback, useEffect } from 'react
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Physics, RigidBody, CuboidCollider } from '@react-three/rapier';
 import * as THREE from 'three';
+import { X, WifiOff } from 'lucide-react';
 
 import World from '../game/World';
 import Terrain from '../game/Terrain';
@@ -167,15 +168,7 @@ export default function BattleScreen() {
     });
   }, [aimInput, selectedTankId, room, networkPlayers]);
 
-  if (connectionStatus !== 'connected') {
-    return (
-      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'black', color: 'white' }}>
-        <h1 className="animate-pulse">{connectionStatus === 'error' ? 'SERVER IS OFFLINE.' : 'CONNECTING TO WARZONE...'}</h1>
-      </div>
-    );
-  }
-
-  const myPlayer = networkPlayers[room.sessionId];
+  const myPlayer = networkPlayers[room?.sessionId];
   const hpRatio = myPlayer ? Math.max(0, myPlayer.hp / myPlayer.maxHp) : 1;
 
   return (
@@ -183,48 +176,45 @@ export default function BattleScreen() {
       <Canvas shadows camera={{ position: [0, 15, 20], fov: 50 }} dpr={[1, 2]}>
         <Suspense fallback={null}>
           <World mapType="forest" timeOfDay="day" />
-          
           <Physics gravity={[0, -25, 0]}>
             <RigidBody type="fixed" friction={3}>
               <CuboidCollider args={[50, 0.1, 50]} position={[0, -0.1, 0]} />
             </RigidBody>
             <Terrain mapType="forest" />
-
-            {/* Local Player */}
             <LocalPlayerController tankId={selectedTankId} moveInput={moveInput} aimInput={aimInput} room={room} />
-            
-            {/* Building colliders (temporary, should match terrain gen later) */}
-            <RigidBody type="fixed" friction={2}><CuboidCollider args={[1.5, 2, 1.5]} position={[15, 2, 0]} /></RigidBody>
-            <RigidBody type="fixed" friction={2}><CuboidCollider args={[1.5, 2, 1.5]} position={[-18, 2, 8]} /></RigidBody>
           </Physics>
 
-          {/* Network Players Rendering */}
           {Object.values(networkPlayers).map(player => (
-            <NetworkedPlayer key={player.sessionId} id={player.sessionId} player={player} isLocal={player.sessionId === room.sessionId} />
+            <NetworkedPlayer key={player.sessionId} id={player.sessionId} player={player} isLocal={player.sessionId === room?.sessionId} />
           ))}
 
-          {/* Network Projectiles Rendering */}
           {Object.entries(networkProjectiles).map(([id, p]) => (
             <Projectile key={id} id={id} type={p.type} startPosition={[p.x, p.y, p.z]} direction={[p.dirX, 0, p.dirZ]} speed={p.speed} />
           ))}
         </Suspense>
       </Canvas>
 
-      {/* HUD Overlay */}
       <div style={{
         position: 'absolute', top: 0, left: 0, right: 0, padding: '10px 15px',
         background: 'linear-gradient(180deg, rgba(0,0,0,0.6), transparent)',
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        pointerEvents: 'none', zIndex: 50
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center', pointerEvents: 'none', zIndex: 50
       }}>
         <button
           onClick={() => leaveBattle()}
           style={{
             pointerEvents: 'auto', background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.2)',
-            borderRadius: '8px', padding: '6px 12px', color: 'white', fontSize: '14px', fontWeight: 'bold'
+            borderRadius: '8px', padding: '6px 12px', color: 'white', fontSize: '14px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px'
           }}
-        >✕ ESCAPE
+        >
+          <X size={16} color="white" /> ESCAPE
         </button>
+
+        {connectionStatus !== 'connected' && (
+          <div style={{ background: 'rgba(255,0,0,0.6)', padding: '5px 10px', borderRadius: '5px', fontSize: '12px', color: 'white', display: 'flex', alignItems: 'center', gap: '5px' }}>
+             <WifiOff size={14} color="white" /> OFFLINE MODE
+          </div>
+        )}
+
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#4cff4c' }}>HP</span>
           <div style={{ width: '150px', height: '16px', background: 'rgba(0,0,0,0.5)', borderRadius: '8px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.2)' }}>

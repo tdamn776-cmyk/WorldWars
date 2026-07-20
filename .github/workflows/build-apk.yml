@@ -20,18 +20,26 @@ jobs:
         run: |
           cd client
           npm install
-          npm install @capacitor/core @capacitor/cli @capacitor/android
+          npm install -g @capacitor/assets
 
-      - name: Build React 3D App
+      - name: Build React Web App
         run: |
           cd client
           npm run build
 
-      - name: Setup Android & Capacitor
+      - name: Generate Capacitor Assets (Logo + Splash)
+        run: |
+          cd client
+          mkdir -p assets
+          cp public/icons/game-logo.png assets/icon.png
+          cp public/icons/game-logo.png assets/splash.png
+
+      - name: Setup Android Ecosystem
         run: |
           cd client
           npx cap init WorldWars com.worldwars.game --web-dir dist || echo "Already initialized"
           npx cap add android || echo "Already added"
+          npx @capacitor/assets generate --android
           npx cap sync android
 
       - name: Setup Java JDK
@@ -46,9 +54,10 @@ jobs:
           echo "allprojects { configurations.all { resolutionStrategy { force 'org.jetbrains.kotlin:kotlin-stdlib:1.9.22'; force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.22'; force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.22' } } }" >> build.gradle
           chmod +x gradlew
           ./gradlew assembleDebug
+          mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/WorldWars.apk
 
-      - name: Upload APK
+      - name: Upload Final APK
         uses: actions/upload-artifact@v4
         with:
-          name: WorldWars-APK
-          path: client/android/app/build/outputs/apk/debug/app-debug.apk
+          name: WorldWars-Android
+          path: client/android/app/build/outputs/apk/debug/WorldWars.apk

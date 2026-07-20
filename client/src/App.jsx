@@ -1,4 +1,6 @@
 import React, { useEffect } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { StatusBar } from '@capacitor/status-bar';
 import useGameStore from './stores/useGameStore';
 import usePlayerStore from './stores/usePlayerStore';
 
@@ -13,6 +15,12 @@ import AdminScreen from './screens/AdminScreen';
 function App() {
   const { screen } = useGameStore();
   const { isLoggedIn } = usePlayerStore();
+
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      StatusBar.hide().catch(e => console.warn('Could not hide status bar', e));
+    }
+  }, []);
 
   return (
     <>

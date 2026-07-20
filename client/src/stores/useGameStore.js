@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import * as Colyseus from 'colyseus.js';
 
-const client = new Colyseus.Client('ws://localhost:2567');
+const client = new Colyseus.Client('wss://worldwars-server.onrender.com');
 
 const useGameStore = create((set, get) => ({
   screen: 'splash',

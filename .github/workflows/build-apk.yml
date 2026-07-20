@@ -62,8 +62,15 @@ jobs:
             <style name="AppTheme.NoActionBar" parent="AppTheme">
               <item name="android:windowFullscreen">true</item>
             </style>
+            <style name="AppTheme.NoActionBarLaunch" parent="AppTheme.NoActionBar">
+              <item name="android:background">@drawable/splash</item>
+            </style>
           </resources>
           XMLEOF
+          mkdir -p android/app/src/main/res/drawable
+          echo '<layer-list xmlns:android="http://schemas.android.com/apk/res/android"><item android:drawable="@color/splash_bg"/></layer-list>' > android/app/src/main/res/drawable/splash.xml
+          mkdir -p android/app/src/main/res/values
+          grep -q "splash_bg" android/app/src/main/res/values/colors.xml 2>/dev/null || echo '<?xml version="1.0" encoding="utf-8"?><resources><color name="splash_bg">#0a0a0f</color></resources>' > android/app/src/main/res/values/colors.xml
 
       - name: Sync Capacitor
         working-directory: client

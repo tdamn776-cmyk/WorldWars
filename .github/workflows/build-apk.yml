@@ -43,6 +43,7 @@ jobs:
       - name: Build Release APK
         run: |
           cd client/android
+          echo "allprojects { configurations.all { resolutionStrategy { force 'org.jetbrains.kotlin:kotlin-stdlib:1.9.22'; force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.22'; force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.22' } } }" >> build.gradle
           chmod +x gradlew
           ./gradlew assembleDebug
 

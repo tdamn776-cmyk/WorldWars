@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import * as Colyseus from 'colyseus.js';
 
-const SERVER_URL = 'wss://worldwars-server.onrender.com';
+const SERVER_URL = 'https://worldwars-server.onrender.com';
 
 let client;
 try {

@@ -68,6 +68,17 @@ jobs:
           </resources>
           XMLEOF
           mkdir -p android/app/src/main/res/drawable
+          rm -f android/app/src/main/res/drawable/splash.png
+          rm -f android/app/src/main/res/drawable-land-hdpi/splash.png
+          rm -f android/app/src/main/res/drawable-land-mdpi/splash.png
+          rm -f android/app/src/main/res/drawable-land-xhdpi/splash.png
+          rm -f android/app/src/main/res/drawable-land-xxhdpi/splash.png
+          rm -f android/app/src/main/res/drawable-land-xxxhdpi/splash.png
+          rm -f android/app/src/main/res/drawable-port-hdpi/splash.png
+          rm -f android/app/src/main/res/drawable-port-mdpi/splash.png
+          rm -f android/app/src/main/res/drawable-port-xhdpi/splash.png
+          rm -f android/app/src/main/res/drawable-port-xxhdpi/splash.png
+          rm -f android/app/src/main/res/drawable-port-xxxhdpi/splash.png
           echo '<layer-list xmlns:android="http://schemas.android.com/apk/res/android"><item android:drawable="@color/splash_bg"/></layer-list>' > android/app/src/main/res/drawable/splash.xml
           mkdir -p android/app/src/main/res/values
           grep -q "splash_bg" android/app/src/main/res/values/colors.xml 2>/dev/null || echo '<?xml version="1.0" encoding="utf-8"?><resources><color name="splash_bg">#0a0a0f</color></resources>' > android/app/src/main/res/values/colors.xml

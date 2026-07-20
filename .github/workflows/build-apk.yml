@@ -16,32 +16,58 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install App Dependencies
+      - name: Install Client Dependencies
+        working-directory: client
         run: |
-          cd client
           npm install
-          npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/status-bar
-          npm install -g @capacitor/assets
+          npm install @capacitor/core @capacitor/cli @capacitor/android
 
-      - name: Build React Web App
-        run: |
-          cd client
-          npm run build
+      - name: Build Vite App
+        working-directory: client
+        run: npm run build
 
-      - name: Generate Capacitor Assets (Logo + Splash)
-        run: |
-          cd client
-          mkdir -p assets
-          cp public/icons/game-logo.png assets/icon.png
-          cp public/icons/game-logo.png assets/splash.png
+      - name: Init Capacitor
+        working-directory: client
+        run: npx cap init WorldWars com.worldwars.game --web-dir dist || true
 
-      - name: Setup Android Ecosystem
+      - name: Add Android Platform
+        working-directory: client
+        run: npx cap add android || true
+
+      - name: Copy App Icons
+        working-directory: client
         run: |
-          cd client
-          npx cap init WorldWars com.worldwars.game --web-dir dist || echo "Already initialized"
-          npx cap add android || echo "Already added"
-          npx @capacitor/assets generate --android
-          npx cap sync android
+          ICON_SRC="public/icons/game-logo.png"
+          for d in mipmap-mdpi mipmap-hdpi mipmap-xhdpi mipmap-xxhdpi mipmap-xxxhdpi; do
+            DIR="android/app/src/main/res/$d"
+            mkdir -p "$DIR"
+            cp "$ICON_SRC" "$DIR/ic_launcher.png"
+            cp "$ICON_SRC" "$DIR/ic_launcher_round.png"
+            cp "$ICON_SRC" "$DIR/ic_launcher_foreground.png"
+          done
+
+      - name: Make App Fullscreen (Immersive)
+        working-directory: client
+        run: |
+          STYLES="android/app/src/main/res/values/styles.xml"
+          cat > "$STYLES" << 'XMLEOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+            <style name="AppTheme" parent="Theme.AppCompat.NoActionBar">
+              <item name="android:windowFullscreen">true</item>
+              <item name="android:windowNoTitle">true</item>
+              <item name="android:windowActionBar">false</item>
+              <item name="android:windowContentOverlay">@null</item>
+            </style>
+            <style name="AppTheme.NoActionBar" parent="AppTheme">
+              <item name="android:windowFullscreen">true</item>
+            </style>
+          </resources>
+          XMLEOF
+
+      - name: Sync Capacitor
+        working-directory: client
+        run: npx cap sync android
 
       - name: Setup Java JDK
         uses: actions/setup-java@v4
@@ -49,16 +75,17 @@ jobs:
           distribution: 'zulu'
           java-version: '21'
 
-      - name: Build Release APK
+      - name: Fix Kotlin & Build APK
+        working-directory: client/android
         run: |
-          cd client/android
           echo "allprojects { configurations.all { resolutionStrategy { force 'org.jetbrains.kotlin:kotlin-stdlib:1.9.22'; force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.22'; force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.22' } } }" >> build.gradle
           chmod +x gradlew
           ./gradlew assembleDebug
-          mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/WorldWars.apk
+          cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/WorldWars.apk
 
-      - name: Upload Final APK
+      - name: Upload WorldWars APK
         uses: actions/upload-artifact@v4
         with:
-          name: WorldWars-Android
+          name: WorldWars
           path: client/android/app/build/outputs/apk/debug/WorldWars.apk
+          compression-level: 0

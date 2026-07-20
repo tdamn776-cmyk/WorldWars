@@ -1,6 +1,4 @@
 import React, { useEffect } from 'react';
-import { Capacitor } from '@capacitor/core';
-import { StatusBar } from '@capacitor/status-bar';
 import useGameStore from './stores/useGameStore';
 import usePlayerStore from './stores/usePlayerStore';
 
@@ -17,9 +15,29 @@ function App() {
   const { isLoggedIn } = usePlayerStore();
 
   useEffect(() => {
-    if (Capacitor.isNativePlatform()) {
-      StatusBar.hide().catch(e => console.warn('Could not hide status bar', e));
-    }
+    const requestFullscreen = async () => {
+      try {
+        if (document.documentElement.requestFullscreen) {
+          await document.documentElement.requestFullscreen();
+        } else if (document.documentElement.webkitRequestFullscreen) {
+          await document.documentElement.webkitRequestFullscreen();
+        }
+      } catch (e) {}
+    };
+
+    const handleFirstTouch = () => {
+      requestFullscreen();
+      document.removeEventListener('touchstart', handleFirstTouch);
+      document.removeEventListener('click', handleFirstTouch);
+    };
+
+    document.addEventListener('touchstart', handleFirstTouch);
+    document.addEventListener('click', handleFirstTouch);
+
+    return () => {
+      document.removeEventListener('touchstart', handleFirstTouch);
+      document.removeEventListener('click', handleFirstTouch);
+    };
   }, []);
 
   return (

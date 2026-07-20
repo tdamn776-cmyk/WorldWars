@@ -11,19 +11,25 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const server = http.createServer(app);
-const gameServer = new Server({
-  transport: new WebSocketTransport({
-    server
-  })
+app.get('/', (req, res) => {
+  res.json({
+    game: 'WorldWars',
+    version: '1.0.0',
+    status: 'online',
+    rooms: ['battle'],
+    message: 'WorldWars Multiplayer Server is running. Connect via WebSocket.'
+  });
 });
 
-// Register BattleRoom
+app.get('/health', (req, res) => res.json({ status: 'ok' }));
+
+const server = http.createServer(app);
+const gameServer = new Server({
+  transport: new WebSocketTransport({ server })
+});
+
 gameServer.define('battle', BattleRoom);
 
-// Health check endpoint for Render.com
-app.get('/health', (req, res) => res.json({ status: "ok" }));
-
 gameServer.listen(port).then(() => {
-  console.log(`⚔️ WorldWars Battle Multiplayer Server running on ws://localhost:${port}`);
+  console.log(`WorldWars Server running on port ${port}`);
 });
